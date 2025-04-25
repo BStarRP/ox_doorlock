@@ -11,17 +11,17 @@ Config.DrawTextUI = false
 ---Set the properties used by [DrawSprite](https://docs.fivem.net/natives/?_0xE7FFAE5EBF23D890).
 Config.DrawSprite = {
     -- Unlocked
-    [0] = { 'mpsafecracking', 'lock_open', 0, 0, 0.018, 0.018, 0, 255, 255, 255, 100 },
+    [0] = { 'mpsafecracking', 'lock_open', 0, 0, 0.018, 0.018, 0, 255, 0, 50, 100 },
 
     -- Locked
-    [1] = { 'mpsafecracking', 'lock_closed', 0, 0, 0.018, 0.018, 0, 255, 255, 255, 100 },
+    [1] = { 'mpsafecracking', 'lock_closed', 0, 0, 0.018, 0.018, 0, 0, 255, 50, 100 },
 }
 
 ---Allow the specified ace principal to use 'command.doorlock'.
 Config.CommandPrincipal = 'group.admin'
 
 ---Allow players with the 'command.doorlock' principal to use any door.
-Config.PlayerAceAuthorised = false
+Config.PlayerAceAuthorised = true
 
 ---The default skill check difficulty when lockpicking a door.
 Config.LockDifficulty = { 'easy', 'easy', 'medium' }
@@ -35,4 +35,4 @@ Config.LockpickItems = {
 }
 
 ---Play sounds using game audio (sound natives) instead of through NUI.
-Config.NativeAudio = true
+Config.NativeAudio = false

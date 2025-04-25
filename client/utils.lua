@@ -38,9 +38,10 @@ local function canPickLock(entity)
 end
 
 ---@param entity number
-local function pickLock(entity)
-	local door = getDoorFromEntity(entity)
-
+local function pickLock(door, item, entity)
+	if entity and DoesEntityExist(entity) then
+		door = getDoorFromEntity(entity)
+	end
 	if not door or PickingLock or not door.lockpick or (not Config.CanPickUnlockedDoors and door.state == 0) then return end
 
 	PickingLock = true
@@ -48,32 +49,55 @@ local function pickLock(entity)
 	TaskTurnPedToFaceCoord(cache.ped, door.coords.x, door.coords.y, door.coords.z, 4000)
 	Wait(500)
 
-	local animDict = lib.requestAnimDict('mp_common_heist')
+	--[[local animDict = lib.requestAnimDict('mp_common_heist')
 
-	TaskPlayAnim(cache.ped, animDict, 'pick_door', 3.0, 1.0, -1, 49, 0, true, true, true)
+	TaskPlayAnim(cache.ped, animDict, 'pick_door', 3.0, 1.0, -1, 49, 0, true, true, true)]]--
 
-	local success = lib.skillCheck(door.lockpickDifficulty or Config.LockDifficulty)
+	local strength = 2
+	local pins = 4
+	if door.lockpickDifficulty and type(door.lockpickDifficulty) == 'table' then
+		local count = #door.lockpickDifficulty
+		local index = math.random(1, count)
+		local difficulty = door.lockpickDifficulty[index] or 'medium'
+		if difficulty == 'easy' then
+			strength = 2
+			pins = 4
+		elseif difficulty == 'medium' then
+			strength = 3
+			pins = 6
+		elseif difficulty == 'hard' then
+			strength = 4
+			pins = 8
+		end
+	end
+	
+	local success = exports['bstar-lockpick']:StartPicking(0.5, strength, pins, item)
+
 	local rand = math.random(1, success and 100 or 5)
 
 	if success then
 		TriggerServerEvent('ox_doorlock:setState', door.id, door.state == 1 and 0 or 1, true)
 	end
 
-	if rand == 1 then
+	--[[if rand == 1 then
 		TriggerServerEvent('ox_doorlock:breakLockpick')
 		lib.notify({ type = 'error', description = locale('lockpick_broke') })
 	end
 
 	StopEntityAnim(cache.ped, 'pick_door', animDict, 0)
-	RemoveAnimDict(animDict)
+	RemoveAnimDict(animDict)]]--
 
 	PickingLock = false
 end
 
-exports('pickClosestDoor', function()
+exports('pickClosestDoor', function(item)
 	if not ClosestDoor then return end
+	pickLock(ClosestDoor, item.name)
+end)
 
-	pickLock(ClosestDoor.entity)
+RegisterNetEvent('lockpicks:UseLockpick', function(item)
+	if not ClosestDoor then return end
+	pickLock(ClosestDoor, item.name)
 end)
 
 local tempData = {}
@@ -312,6 +336,10 @@ CreateThread(function()
 			if resource == cache.resource then
 				if target.qt then
 					return target.exp:RemoveObject(options)
+				end
+
+				if target.qb then
+					return target.exp:RemoveGlobalObject(options)
 				end
 			end
 		end)

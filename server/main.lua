@@ -216,7 +216,7 @@ local function isAuthorised(playerId, door, lockpick)
 		if lockpick then
 			return DoesPlayerHaveItem(player, Config.LockpickItems)
 		end
-
+		
 		if door.characters and table.contains(door.characters, GetCharacterId(player)) then
 			return true
 		end
@@ -260,13 +260,13 @@ end)
 ---@param state 0 | 1 | boolean
 ---@param lockpick? boolean
 ---@return boolean
-local function setDoorState(id, state, lockpick)
+local function setDoorState(id, state, forced)
 	local door = doors[id]
 
 	state = (state == 1 or state == 0) and state or (state and 1 or 0)
 
 	if door then
-		local authorised = not source or source == '' or isAuthorised(source, door, lockpick)
+		local authorised = forced or not source or source == '' or isAuthorised(source, door)
 
 		if authorised then
 			door.state = state
@@ -283,15 +283,13 @@ local function setDoorState(id, state, lockpick)
 				end)
 			end
 
-			TriggerEvent('ox_doorlock:stateChanged', source, door.id, state == 1,
-				type(authorised) == 'string' and authorised)
+			TriggerEvent('ox_doorlock:stateChanged', source, door.id, state == 1, type(authorised) == 'string' and authorised)
 
 			return true
 		end
 
-		if source then
-			lib.notify(source,
-				{ type = 'error', icon = 'lock', description = state == 0 and 'cannot_unlock' or 'cannot_lock' })
+		if source and not forced then
+			exports.qbx_core:Notify(source, state == 0 and 'You cannot unlock this door!' or 'You cannot lock this door!', 'error', 3500, 'lock')
 		end
 	end
 
@@ -340,9 +338,13 @@ RegisterNetEvent('ox_doorlock:editDoorlock', function(id, data)
 	end
 end)
 
-RegisterNetEvent('ox_doorlock:breakLockpick', function()
-	local player = GetPlayer(source)
-	return player and DoesPlayerHaveItem(player, Config.LockpickItems, true)
+RegisterNetEvent("ox_doorlock:server:doorAction", function(door, state)
+    local door = exports.ox_doorlock:getDoorFromName(door)
+    if door then
+        exports.ox_doorlock:setDoorState(door.id, state, true)
+    else
+        print("Error: Door not found with the name " .. tostring(door))
+    end
 end)
 
 lib.addCommand('doorlock', {
